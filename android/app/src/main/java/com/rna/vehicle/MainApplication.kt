@@ -1,4 +1,4 @@
-package com.vechile_app
+package com.rna.vehicle
 
 import android.app.Application
 import com.facebook.react.PackageList

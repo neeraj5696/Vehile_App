@@ -1,136 +1,76 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
-  StatusBar,
-} from 'react-native';
-import DetailsUpdator from './Details_updator';
+  getAuth,
+  onAuthStateChanged,
+  FirebaseAuthTypes,
+} from '@react-native-firebase/auth';
+import LoginScreen from './src/screens/LoginScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import Party_Section from './src/screens/Party/Party_Section';
+import VehicleList from './src/screens/Vehicle/VehicleList';
+import VehicleDetails from './src/screens/Vehicle/VechileDetails';
+import VehicleDetailScreen from './src/screens/Vehicle/VehicleDetailScreen';
+import EditTrip from './src/screens/Vehicle/EditTrip';
+import PartyList from './src/screens/Party/PartyList';
+import PartyListScreen from './src/screens/Party/PartyListScreen';
+import PartyDetailScreen from './src/screens/Party/PartyDetailScreen';
+import TripEntryScreen from './src/screens/tripentry/TripEntryScreen';
+import Details_updator from './src/screens/tripentry/Details_updator';
+import AddCustomer from './src/screens/Customer/AddCustomer';
+import CustomerList from './src/screens/Customer/CustomerList';
+import TripList from './src/screens/Party/TripList';
 
-interface Vehicle {
-  id: string;
-  name: string;
-  type: string;
-  number: string;
-}
+const Stack = createNativeStackNavigator();
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'details'>('home');
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    { id: '1', name: 'Honda City', type: 'Car', number: 'MH12AB1234' },
-    { id: '2', name: 'Royal Enfield', type: 'Bike', number: 'MH14CD5678' },
-  ]);
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const auth = getAuth();
 
-  if (currentPage === 'details') {
-    return <DetailsUpdator onBack={() => setCurrentPage('home')} />;
-  }
+  useEffect(() => {
+    console.log('Firebase Auth initialized');
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      console.log(
+        'Auth state changed:',
+        user ? `User: ${user.uid}` : 'No user',
+      );
+      setUser(user);
+      if (initializing) setInitializing(false);
+    });
 
-  const renderVehicleItem = ({ item }: { item: Vehicle }) => (
-    <View style={styles.vehicleItem}>
-      <Text style={styles.vehicleName}>{item.name}</Text>
-      <Text style={styles.vehicleDetails}>{item.type} - {item.number}</Text>
-    </View>
-  );
+    return () => unsubscribe();
+  }, [initializing, auth]);
+
+  if (initializing) return null;
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
-      {/* Party Section Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Party Section</Text>
-      </View>
-
-      <ScrollView style={styles.content}>
-        {/* Details List Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Details List</Text>
-          <FlatList
-            data={vehicles}
-            renderItem={renderVehicleItem}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
-        </View>
-
-        {/* Update New Details Section */}
-        <View style={styles.section}>
-          <TouchableOpacity 
-            style={styles.updateButton}
-            onPress={() => setCurrentPage('details')}
-          >
-            <Text style={styles.updateButtonText}>+ Update New Details</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="TripEntry" component={TripEntryScreen} />
+            <Stack.Screen name="VehicleList" component={VehicleList} />
+            <Stack.Screen name="VehicleDetails" component={VehicleDetailScreen} />
+            <Stack.Screen name="PartyList" component={PartyListScreen} />
+            <Stack.Screen name="PartyDetails" component={PartyDetailScreen} />
+            <Stack.Screen name="TripList" component={TripList} />
+            <Stack.Screen name="Vehicle" component={Details_updator} />
+            <Stack.Screen name="Party_Section" component={Party_Section} />
+            <Stack.Screen name="VehicleDetailsOld" component={VehicleDetails} />
+            <Stack.Screen name="EditTrip" component={EditTrip} />
+            <Stack.Screen name="PartyListOld" component={PartyList} />
+            <Stack.Screen name="AddCustomer" component={AddCustomer} />
+            <Stack.Screen name="CustomerList" component={CustomerList} />
+          </>
+        ) : (
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    backgroundColor: '#007bff',
-    padding: 20,
-    paddingTop: 50,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
-  },
-  vehicleItem: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  vehicleName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  vehicleDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  updateButton: {
-    backgroundColor: '#28a745',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  updateButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default App;

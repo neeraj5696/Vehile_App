@@ -1,4 +1,4 @@
-package com.vechile_app
+package com.rna.vehicle
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
